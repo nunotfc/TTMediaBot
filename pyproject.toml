@@ -8,6 +8,7 @@ dependencies = [
     "babel>=2.17.0",
     "beautifulsoup4>=4.13.4",
     "httpx==0.27.0",
+    "mpv>=1.0.8",
     "patool>=4.0.1",
     "portalocker>=3.1.1",
     "pydantic>=2.11.4",
