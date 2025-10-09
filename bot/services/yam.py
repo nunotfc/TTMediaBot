@@ -22,7 +22,12 @@ class YamService(Service):
         self.bot = bot
         self.config = config
         self.name = "yam"
-        self.hostnames = ["music.yandex.ru"]
+        self.hostnames = [
+            "music.yandex.ru",
+            "music.yandex.com",
+            "music.yandex.by",
+            "music.yandex.kz",
+        ]
         self.is_enabled = self.config.enabled
         self.error_message = ""
         self.warning_message = ""
@@ -75,6 +80,11 @@ class YamService(Service):
                             for track in volume
                         )
                 return tracks
+            # New track link format from Windows app
+            if "/track/" in path:
+                split_path = path.split("/")
+                real_id = split_path[2]
+                return self.get(None, extra_info={"track_id": real_id}, process=True)
             if "/artist/" in path:
                 tracks = []
                 artist_tracks = self.api.artists_tracks(path.split("/")[2]).tracks
