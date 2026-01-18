@@ -24,6 +24,8 @@ from bot import (
     app_vars,
 )
 
+from bot.player.enums import State
+from bot.player.enums import Mode
 
 class Bot:
     def __init__(
@@ -101,8 +103,21 @@ class Bot:
         for command in self.config.general.start_commands:
             message = Message(text=command, user=startup_context_user, channel=self.ttclient.channel, type=MessageType.User)
             self.command_processor(message)
+        if (
+            self.player.mode == Mode.Queue
+            and self.cache.queue
+            and self.player.state == State.Stopped
+        ):
+            try:
+                self.player.play_queue()
+            except (errors.NothingIsPlayingError, errors.NoNextTrackError):
+                pass
         self._close = False
         while not self._close:
+            if self.config.general.back_to_root_channel and len(self.ttclient.tt.getChannelUsers(self.ttclient.channel.id))==1 and self.ttclient.channel.id!=1:
+                if self.player.state != State.Stopped:
+                    self.player.stop()
+                self.ttclient.DoMoveUser(self.ttclient.user.id, 1)
             try:
                 message = self.ttclient.message_queue.get_nowait()
                 logging.info(

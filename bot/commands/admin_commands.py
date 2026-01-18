@@ -13,6 +13,35 @@ from bot import app_vars, errors
 if TYPE_CHECKING:
     from bot.TeamTalk.structs import User
 
+class OptionShowMetaCommand(Command):
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "Toggles metadata display in the status message."
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        if self.config.general.showmeta:
+            self.config.general.showmeta = False
+            return self.translator.translate("Metadata display disabled.")
+        else:
+            self.config.general.showmeta = True
+            return self.translator.translate("Metadata display enabled.")
+
+class OptionBackToRootChannelCommand(Command):
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "Toggles the ability for users to move the bot to their channels automatically."
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        if self.config.general.back_to_root_channel:
+            self.config.general.back_to_root_channel = False
+            return self.translator.translate("Users can't move the bot to their channels.")
+        else:
+            self.config.general.back_to_root_channel = True
+            return self.translator.translate("Users can move the bot to their channels.")
 
 class BlockCommandCommand(Command):
     @property
@@ -101,13 +130,15 @@ class ClearCacheCommand(Command):
     @property
     def help(self) -> str:
         return self.translator.translate(
-            "r/f Clears bot's cache. r clears recents, f clears favorites, without an option clears the entire cache"
+            "r/f/q/p Clears bot's cache. r clears recents, f clears favorites, q clears the queue, p clears saved positions, without an option clears the entire cache"
         )
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
         if not arg:
             self.cache.recents.clear()
             self.cache.favorites.clear()
+            self.cache.queue.clear()
+            self.cache.positions.clear()
             self.cache_manager.save()
             return self.translator.translate("Cache cleared")
         elif arg == "r":
@@ -118,6 +149,19 @@ class ClearCacheCommand(Command):
             self.cache.favorites.clear()
             self.cache_manager.save()
             return self.translator.translate("Favorites cleared")
+        elif arg == "q":
+            self.cache.queue.clear()
+            self.cache_manager.save()
+            return self.translator.translate("Queue cleared")
+        elif arg == "p":
+            try:
+                for track in self.cache.recents:
+                    track.resume_position = None
+                    track.resume_duration = None
+                self.cache_manager.save()
+            except Exception:
+                self.cache_manager.save()
+            return self.translator.translate("Positions cleared")
 
 
 class JoinChannelCommand(Command):

@@ -10,12 +10,18 @@ from yt_dlp import YoutubeDL
 from yt_dlp.downloader import get_suitable_downloader
 from youtubesearchpython import VideosSearch
 
+from .patches import patch_channel_link_none, patch_httpx_post_proxies
+
 from bot.config.models import YtModel
 
 from bot.player.enums import TrackType
 from bot.player.track import Track
 from bot.services import Service as _Service
-from bot import errors
+from bot import errors,app_vars
+
+
+patch_httpx_post_proxies()
+patch_channel_link_none()
 
 
 class YtService(_Service):
@@ -32,12 +38,15 @@ class YtService(_Service):
 
     def initialize(self):
         self._ydl_config = {
+            #"verbose": True,
+
             "skip_download": True,
             "format": "m4a/bestaudio/best[protocol!=m3u8_native]/best",
-            "socket_timeout": 5,
+            "socket_timeout": 5,    
+#"cookiesfrombrowser": ('firefox', '', None, 'none'),
+            #"cookiefile": f"{app_vars.directory}/cookies.txt",
             "logger": logging.getLogger("root"),
         }
-
         if self.config.cookiefile_path and os.path.isfile(self.config.cookiefile_path):
             self._ydl_config |= {"cookiefile": self.config.cookiefile_path}
             
@@ -103,10 +112,10 @@ class YtService(_Service):
         if search["result"]:
             tracks: List[Track] = []
             for video in search["result"]:
-                track = Track(
-                    service=self.name, url=video["link"], type=TrackType.Dynamic
-                )
-                tracks.append(track)
+                try:
+                    tracks.append(Track(service=self.name, url=video["link"], type=TrackType.Dynamic))
+                except Exception:
+                    continue
             return tracks
         else:
             raise errors.NothingFoundError("")

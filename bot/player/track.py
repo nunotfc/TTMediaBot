@@ -30,6 +30,8 @@ class Track:
         self.format = format
         self.extra_info = extra_info
         self.type = type
+        self.resume_position: Optional[float] = None
+        self.resume_duration: Optional[float] = None
         self._lock = Lock()
         self._is_fetched = False
 

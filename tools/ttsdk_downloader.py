@@ -18,7 +18,6 @@ import downloader
 url = "https://bearware.dk/teamtalksdk"
 
 
-
 def get_url_suffix_from_platform() -> str:
     machine = platform.machine()
     if sys.platform == "win32":
@@ -42,12 +41,34 @@ def get_url_suffix_from_platform() -> str:
 
 
 def download() -> None:
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+    headers = {
+        'User-Agent': (
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/58.0.3029.110 Safari/537.3'
+        )
+    }
+
     r = requests.get(url, headers=headers)
     page = bs4.BeautifulSoup(r.text, features="html.parser")
-    # The last tested version series is v5.15x
+
+    # Get all <li> tags from the page
     versions = page.find_all("li")
-    version = [i for i in versions if "5.15" in i.text][-1].a.get("href")[0:-1]
+
+    # Try to find 5.15 versions first
+    v515 = [i for i in versions if "5.15" in i.text and i.a and i.a.get("href").endswith("/")]
+
+    if v515:
+        version = v515[-1].a.get("href").strip("/")
+        print("Using stable 5.15 version:", version)
+    else:
+        # fallback: get the latest version listed
+        valid_versions = [i for i in versions if i.a and i.a.get("href").endswith("/")]
+        if not valid_versions:
+            sys.exit("No SDK versions found on the page.")
+        version = valid_versions[-1].a.get("href").strip("/")
+        print("5.15 not found, falling back to latest available version:", version)
+
     download_url = (
         url
         + "/"
@@ -55,6 +76,7 @@ def download() -> None:
         + "/"
         + "tt5sdk_{v}_{p}.7z".format(v=version, p=get_url_suffix_from_platform())
     )
+
     print("Downloading from " + download_url)
     downloader.download_file(download_url, os.path.join(os.getcwd(), "ttsdk.7z"))
 
@@ -68,6 +90,7 @@ def extract() -> None:
     patoolib.extract_archive(
         os.path.join(os.getcwd(), "ttsdk.7z"), outdir=os.path.join(os.getcwd(), "ttsdk")
     )
+
 
 def move() -> None:
     path = os.path.join(os.getcwd(), "ttsdk", os.listdir(os.path.join(os.getcwd(), "ttsdk"))[0])
@@ -100,17 +123,18 @@ def clean() -> None:
 
 
 def install() -> None:
-    print("Installing TeamTalk sdk components")
-    print("Downloading latest sdk version")
+    print("Installing TeamTalk SDK components")
+    print("Downloading latest SDK version...")
     download()
-    print("Downloaded. extracting")
+    print("Downloaded. Extracting...")
     extract()
-    print("Extracted. moving")
+    print("Extracted. Moving files...")
     move()
-    print("moved. cleaning")
+    print("Moved. Cleaning temporary files...")
     clean()
-    print("cleaned.")
-    print("Installed, exiting.")
+    print("Cleaned.")
+    print("Installation complete.")
+
 
 if __name__ == "__main__":
     install()
