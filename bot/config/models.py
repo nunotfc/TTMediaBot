@@ -75,11 +75,16 @@ class YamModel(BaseModel):
     token: str = ""
 
 
+class DropboxModel(BaseModel):
+    enabled: bool = True
+
+
 class ServicesModel(BaseModel):
     default_service: str = "vk"
     vk: VkModel = VkModel()
     yam: YamModel = YamModel()
     yt: YtModel = YtModel()
+    dropbox: DropboxModel = DropboxModel()
 
 
 class LoggerModel(BaseModel):
