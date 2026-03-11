@@ -269,20 +269,30 @@ class Player:
         except Exception:
             ...
 
+    def _update_audio_filters(self) -> None:
+        """Combine bass_boost and pitch filters into a single af string"""
+        filters = []
+        # Add bass boost filter if active
+        if self.bass_boost_level > 0:
+            gain = (self.bass_boost_level * 60) // 100 - 30
+            filters.append(f"bass=g={gain}")
+        # Add pitch filter if active
+        pitch = self.get_pitch()
+        if pitch != 0:
+            sample_rate = 48000
+            pitch_factor = 2.0 ** (pitch / 12.0)
+            filters.append(f"lavfi=[asetrate={sample_rate}*{pitch_factor},aresample={sample_rate}]")
+        # Set combined filters
+        if filters:
+            self._player.af = ",".join(filters)
+        else:
+            self._player.af = ""
+
     def set_bass_boost(self, level: int) -> None:
         if level < 0 or level > 100:
             raise ValueError()
-        self._clear_bass_boost()
-        self.bass_boost_level = 0
-        if level == 0:
-            self._player.af = ""
-            return
-        gain = (level * 60) // 100 - 30
-        try:
-            self._player.af = f"bass=g={gain}"
-        except Exception:
-            raise errors.ServiceError("Cannot set bass boost")
         self.bass_boost_level = level
+        self._update_audio_filters()
         try:
             self.config.bass_boost_level = level
         except Exception:
@@ -295,6 +305,15 @@ class Player:
         if arg < 0.25 or arg > 4:
             raise ValueError()
         self._player.speed = arg
+
+    def get_pitch(self) -> int:
+        return getattr(self, '_pitch', 0)
+
+    def set_pitch(self, semitons: int) -> None:
+        if semitons < -12 or semitons > 12:
+            raise ValueError()
+        self._pitch = semitons
+        self._update_audio_filters()
 
     def seek_back(self, step: Optional[float] = None) -> None:
         step = step if step else self.config.seek_step

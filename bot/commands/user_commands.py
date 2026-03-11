@@ -565,6 +565,31 @@ class BassBoostCommand(Command):
             return self.translator.translate("Cannot set bass boost")
 
 
+class PitchCommand(Command):
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "SEMITONES Sets pitch from -12 to +12 semitones (one octave). 0 disables pitch shift"
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        if not arg:
+            return self.translator.translate("Current pitch: {semitons} semitones").format(
+                semitons=self.player.get_pitch()
+            )
+        try:
+            semitons = int(arg)
+            self.player.set_pitch(semitons)
+            if semitons == 0:
+                return self.translator.translate("Pitch shift disabled")
+            else:
+                return self.translator.translate("Pitch set to {semitons} semitones").format(
+                    semitons=semitons
+                )
+        except ValueError:
+            raise errors.InvalidArgumentError()
+
+
 class FavoritesCommand(Command):
     @property
     def help(self) -> str:
@@ -753,7 +778,7 @@ class MoveUsersCommand(Command):
         users = self.ttclient.tt.getChannelUsers(user.channel.id)
         can_move = True
         for user_entry in users:
-            if sys.version_info <= (3, 10 , 10):
+            if sys.version_info < (3, 11):
                 if "TTMediaBot" in user_entry.szClientName:
                     can_move = False
                     break

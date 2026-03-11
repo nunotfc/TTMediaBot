@@ -50,6 +50,7 @@ class CommandProcessor:
             "v": user_commands.VolumeCommand,
             "mu": user_commands.MuteCommand,
             "sp": user_commands.SpeedCommand,
+            "pi": user_commands.PitchCommand,
             "ep": user_commands.EnablePositionsCommand,
             "bb": user_commands.BassBoostCommand,
             "f": user_commands.FavoritesCommand,
@@ -146,7 +147,10 @@ class CommandProcessor:
                 raise errors.AccessDeniedError(
                     self.translator.translate("You are banned"),
                 )
-            elif user.channel.id != self.ttclient.channel.id:
+            if command == "go":
+                return True
+
+            elif user.channel.id != self.ttclient.channel.id and command != "go":
                 raise errors.AccessDeniedError(
                     self.translator.translate("You are not in bot's channel"),
                 )
