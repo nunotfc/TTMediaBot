@@ -14,20 +14,37 @@ if TYPE_CHECKING:
 
 
 cache_data_type = Dict[str, Any]
+MAX_QUEUE_SIZE = 1000
 
 
 class Cache:
     def __init__(self, cache_data: cache_data_type):
         self.cache_version = cache_data["cache_version"] if "cache_version" in cache_data else CacheManager.version
+        # Corrigir bug: garantir que recents seja sempre deque com maxlen
         self.recents: deque[Track] = (
-            cache_data["recents"]
+            deque(cache_data["recents"], maxlen=app_vars.recents_max_lenth)
             if "recents" in cache_data
             else deque(maxlen=app_vars.recents_max_lenth)
         )
         self.favorites: Dict[str, List[Track]] = (
             cache_data["favorites"] if "favorites" in cache_data else {}
         )
-        self.queue: List[Track] = cache_data["queue"] if "queue" in cache_data else []
+        # Limitar queue ao carregar
+        self.queue: List[Track] = (
+            cache_data["queue"][:MAX_QUEUE_SIZE] if "queue" in cache_data else []
+        )
+
+    def add_to_queue(self, track: "Track") -> None:
+        """Adiciona track à queue respeitando o limite MAX_QUEUE_SIZE."""
+        self.queue.append(track)
+        if len(self.queue) > MAX_QUEUE_SIZE:
+            self.queue.pop(0)  # Remove o mais antigo (FIFO)
+
+    def extend_queue(self, tracks: List["Track"]) -> None:
+        """Adiciona múltiplos tracks à queue respeitando o limite."""
+        self.queue.extend(tracks)
+        if len(self.queue) > MAX_QUEUE_SIZE:
+            self.queue = self.queue[-MAX_QUEUE_SIZE:]  # Mantém apenas os mais recentes
 
     @property
     def data(self):

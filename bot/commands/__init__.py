@@ -82,6 +82,8 @@ class CommandProcessor:
             "gcid": admin_commands.GetChannelIDCommand,
     "sm": admin_commands.OptionShowMetaCommand,
     "br": admin_commands.OptionBackToRootChannelCommand,
+            "update": admin_commands.UpdateCommand,
+            "upd": admin_commands.UpdateCommand,
         }
 
     def run(self):

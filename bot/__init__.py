@@ -92,12 +92,28 @@ class Bot:
         self.tt_player_connector.start()
         self.command_processor.run()
         logging.info("Started")
+
+        # Esperar estar conectado E no canal antes de processar comandos de startup
+        logging.info("Waiting to join channel...")
+        max_wait = 30  # segundos máximos de espera
+        waited = 0
+        while not self.ttclient._joined_channel and waited < max_wait:
+            time.sleep(1)
+            waited += 1
+            if waited % 5 == 0:
+                logging.debug(f"Still waiting to join channel... ({waited}/{max_wait}s)")
+
+        if not self.ttclient._joined_channel:
+            logging.error("Timed out waiting to join channel!")
+        else:
+            logging.info(f"Successfully joined channel after {waited} seconds")
+
         logging.info(f"Processing {len(self.config.general.start_commands)} startup command(s)...")
         startup_context_user = User(
-            id=-1, nickname="Startup", username="", 
-            channel=self.ttclient.channel, 
-            type=UserType.Admin, is_admin=True, 
-            status="", gender=UserStatusMode.N, state=UserState.Null, 
+            id=-1, nickname="Startup", username="",
+            channel=self.ttclient.channel,
+            type=UserType.Admin, is_admin=True,
+            status="", gender=UserStatusMode.N, state=UserState.Null,
             client_name="", version=0, user_account=None, is_banned=False
         )
         for command in self.config.general.start_commands:

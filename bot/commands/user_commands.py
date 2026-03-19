@@ -126,7 +126,7 @@ class PlayPauseCommand(Command):
                     if not track_list:
                         raise errors.NothingFoundError()
                     track = track_list[0].get_raw()
-                    self.cache.queue.append(track)
+                    self.cache.add_to_queue(track)
                     self.cache_manager.save()
                     if self.config.general.send_channel_messages:
                         self.run_async(
@@ -191,8 +191,9 @@ class PlayUrlCommand(Command):
             try:
                 tracks = self.module_manager.streamer.get(arg, user.is_admin)
                 if self.player.mode == Mode.Queue:
-                    for track in tracks:
-                        self.cache.queue.append(track.get_raw())
+                    # Converter tracks para raw e adicionar de uma vez
+                    raw_tracks = [track.get_raw() for track in tracks]
+                    self.cache.extend_queue(raw_tracks)
                     self.cache_manager.save()
                     if self.config.general.send_channel_messages:
                         self.run_async(

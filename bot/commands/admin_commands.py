@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import os
 import subprocess
 import sys
@@ -427,3 +428,83 @@ class GetChannelIDCommand(Command):
 
     def __call__(self, arg: str, user: User) -> Optional[str]:
         return str(self.ttclient.channel.id)
+
+
+class UpdateCommand(Command):
+    @property
+    def help(self) -> str:
+        return self.translator.translate("Checks for updates and restarts the bot if packages are updated")
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        # Enviar mensagem de que está verificando
+        self.ttclient.send_message(
+            self.translator.translate("Checking for updates..."),
+            user
+        )
+
+        # Capturar versões atuais
+        old_packages = self._get_installed_packages()
+
+        # Executar upgrade
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--upgrade"],
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            return self.translator.translate("Error updating packages: {}").format(result.stderr)
+
+        # Capturar novas versões
+        new_packages = self._get_installed_packages()
+
+        # Comparar e encontrar diferenças
+        updated = self._find_updated_packages(old_packages, new_packages)
+
+        if not updated:
+            return self.translator.translate("No updates available.")
+
+        # Format message com as atualizações
+        updates_text = self.translator.translate("Updates installed:\n{}").format(
+            "\n".join(updated)
+        )
+        self.ttclient.send_message(updates_text, user)
+
+        # Reiniciar o bot (igual ao RestartCommand)
+        self._bot.close()
+        args = sys.argv
+        if sys.platform == "win32":
+            subprocess.run([sys.executable] + args)
+        else:
+            args.insert(0, sys.executable)
+            os.execv(sys.executable, args)
+        return None
+
+    def _get_installed_packages(self) -> dict:
+        """Retorna dict com nome do pacote -> versão"""
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "list", "--format=json"],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            packages = json.loads(result.stdout)
+            return {pkg["name"].lower(): pkg["version"] for pkg in packages}
+        return {}
+
+    def _find_updated_packages(self, old: dict, new: dict) -> list:
+        """Retorna lista de mensagens descrevendo as atualizações"""
+        updated = []
+        for name, old_version in old.items():
+            new_version = new.get(name)
+            if new_version and new_version != old_version:
+                # Formatar mensagem tipo "Atualizado yt-dlp de 2024.1.1 para 2024.2.1"
+                msg = self.translator.translate(
+                    "Updated {package} from {old_version} to {new_version}"
+                ).format(
+                    package=name,
+                    old_version=old_version,
+                    new_version=new_version
+                )
+                updated.append(msg)
+        return updated

@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from bot import Bot
 
 
+MAX_TRACK_LIST_SIZE = 1000
+
+
 class Player:
     def __init__(self, bot: Bot):
         self.config = bot.config.player
@@ -25,8 +28,9 @@ class Player:
         self.cache_manager = bot.cache_manager
         mpv_options = {
             "demuxer_lavf_o": "http_persistent=false",
-            "demuxer_max_back_bytes": 1048576,
-            "demuxer_max_bytes": 2097152,
+            "demuxer_max_back_bytes": 0,  # Sem buffer trás
+            "demuxer_max_bytes": 640000,  # ~640KB (~5 segundos a 128kbps)
+            "cache_secs": 5,  # 5 segundos de buffer para todos os streams
             "video": False,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
             "ytdl": False,
@@ -86,7 +90,11 @@ class Player:
             self._save_position_marker()
         self._queue_active_track = False
         if tracks != None:
+            # Limitar track_list para evitar consumo excessivo de RAM
+            if len(tracks) > MAX_TRACK_LIST_SIZE:
+                tracks = tracks[:MAX_TRACK_LIST_SIZE]
             self.track_list = tracks
+
             if not start_track_index and self.mode == Mode.Random:
                 self.shuffle(True)
                 self.track_index = self._index_list[0]
