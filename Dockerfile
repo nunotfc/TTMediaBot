@@ -18,7 +18,6 @@ USER ttbot
 WORKDIR /home/ttbot
 COPY --chown=ttbot requirements.txt .
 RUN pip install -r requirements.txt
-COPY --chown=ttbot tviplayer.py /home/ttbot/.local/lib/python3.11/site-packages/yt_dlp/extractor/tviplayer.py
 COPY --chown=ttbot . .
 RUN python tools/ttsdk_downloader.py && python tools/compile_locales.py
 CMD pulseaudio --start && ./TTMediaBot.sh -c data/config.json --cache data/TTMediaBotCache.dat --log data/TTMediaBot.log
