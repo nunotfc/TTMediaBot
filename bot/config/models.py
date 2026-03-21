@@ -7,6 +7,7 @@ class GeneralModel(BaseModel):
     language: str = "en"
     send_channel_messages: bool = True
     back_to_root_channel: bool = True
+    root_channel_id: int = 1
     showmeta: bool = True
     enable_positions: bool = False
 

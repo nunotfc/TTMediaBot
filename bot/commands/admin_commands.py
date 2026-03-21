@@ -44,6 +44,21 @@ class OptionBackToRootChannelCommand(Command):
             self.config.general.back_to_root_channel = True
             return self.translator.translate("Users can move the bot to their channels.")
 
+
+class SetRootChannelCommand(Command):
+    @property
+    def help(self) -> str:
+        return self.translator.translate(
+            "Sets the current bot channel as the return channel used by the go command."
+        )
+
+    def __call__(self, arg: str, user: User) -> Optional[str]:
+        self.config.general.root_channel_id = self.ttclient.channel.id
+        self.config.general.back_to_root_channel = True
+        return self.translator.translate(
+            "Return channel set to the current channel ID: {channel_id}."
+        ).format(channel_id=self.config.general.root_channel_id)
+
 class BlockCommandCommand(Command):
     @property
     def help(self) -> str:
