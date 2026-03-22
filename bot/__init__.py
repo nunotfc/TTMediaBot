@@ -130,10 +130,11 @@ class Bot:
                 pass
         self._close = False
         while not self._close:
-            if self.config.general.back_to_root_channel and len(self.ttclient.tt.getChannelUsers(self.ttclient.channel.id))==1 and self.ttclient.channel.id!=1:
+            root_channel_id = self.config.general.root_channel_id
+            if self.config.general.back_to_root_channel and len(self.ttclient.tt.getChannelUsers(self.ttclient.channel.id))==1 and self.ttclient.channel.id != root_channel_id:
                 if self.player.state != State.Stopped:
                     self.player.stop()
-                self.ttclient.DoMoveUser(self.ttclient.user.id, 1)
+                self.ttclient.DoMoveUser(self.ttclient.user.id, root_channel_id)
             try:
                 message = self.ttclient.message_queue.get_nowait()
                 logging.info(

@@ -789,7 +789,8 @@ class MoveUsersCommand(Command):
                     break
         if not can_move:
             return self.translator.translate("There is already a bot on this channel.")
-        if self.ttclient.channel.id!=1:return self.translator.translate("I'm not on the root channel.")
+        if self.ttclient.channel.id != self.config.general.root_channel_id:
+            return self.translator.translate("I'm not on the root channel.")
         self.ttclient.DoMoveUser(self.ttclient.user.id, user.channel.id)
         return self.translator.translate("Ready, I'm at your disposal. But remember. If there are no users in the channel other than me, I'll go back to the home channel.")
 

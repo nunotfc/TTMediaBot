@@ -80,8 +80,9 @@ class CommandProcessor:
             "qq": admin_commands.QuitCommand,
             "quit": admin_commands.QuitCommand,
             "gcid": admin_commands.GetChannelIDCommand,
-    "sm": admin_commands.OptionShowMetaCommand,
-    "br": admin_commands.OptionBackToRootChannelCommand,
+            "sm": admin_commands.OptionShowMetaCommand,
+            "br": admin_commands.OptionBackToRootChannelCommand,
+            "backc": admin_commands.SetRootChannelCommand,
             "update": admin_commands.UpdateCommand,
             "upd": admin_commands.UpdateCommand,
         }
