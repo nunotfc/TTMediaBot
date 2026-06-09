@@ -21,6 +21,5 @@ RUN pip install -r requirements.txt
 COPY --chown=ttbot . .
 RUN python tools/ttsdk_downloader.py && python tools/compile_locales.py
 RUN chmod +x /home/ttbot/TTMediaBot.sh /home/ttbot/docker-entrypoint.sh
-RUN mkdir -p /home/ttbot/data
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["-c", "data/config.json", "--cache", "data/TTMediaBotCache.dat", "--log", "data/TTMediaBot.log"]

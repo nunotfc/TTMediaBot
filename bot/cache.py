@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import pickle
 from collections import deque
@@ -113,12 +114,28 @@ class CacheManager:
             except Exception:
                 f.seek(0)
                 meta = pickle.load(f)
-        with open(self.recents_file, "rb") as f:
-            recents = pickle.load(f)
-        with open(self.favorites_file, "rb") as f:
-            favorites = pickle.load(f)
-        with open(self.queue_file, "rb") as f:
-            queue = pickle.load(f)
+
+        try:
+            with open(self.recents_file, "rb") as f:
+                recents = pickle.load(f)
+        except (EOFError, pickle.UnpicklingError, Exception) as e:
+            logging.warning(f"Failed to load recents.dat, using empty: {e}")
+            recents = deque(maxlen=app_vars.recents_max_lenth)
+
+        try:
+            with open(self.favorites_file, "rb") as f:
+                favorites = pickle.load(f)
+        except (EOFError, pickle.UnpicklingError, Exception) as e:
+            logging.warning(f"Failed to load favorites.dat, using empty: {e}")
+            favorites = {}
+
+        try:
+            with open(self.queue_file, "rb") as f:
+                queue = pickle.load(f)
+        except (EOFError, pickle.UnpicklingError, Exception) as e:
+            logging.warning(f"Failed to load queue.dat, using empty: {e}")
+            queue = []
+
         return {
             "cache_version": meta.get("cache_version", self.version),
             "recents": recents,
