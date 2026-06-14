@@ -12,3 +12,4 @@ youtube-search-python
 yt-dlp-ejs
 deno
 yt-dlp>=2024.0.dev0
+cloudscraper
