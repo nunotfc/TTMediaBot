@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import bs4
 import patoolib
-import requests
 
 import os
 import platform
@@ -15,7 +13,13 @@ sys.path.append(path)
 import downloader
 
 
-url = "https://bearware.dk/teamtalksdk"
+# Direct SDK URLs (v5.22a - Cloudflare blocks scraping)
+SDK_URLS = {
+    "win64": "https://www.bearware.dk/teamtalksdk/v5.22a/tt5prosdk_v5.22a_win64.7z",
+    "win32": "https://www.bearware.dk/teamtalksdk/v5.22a/tt5prosdk_v5.22a_win32.7z",
+    "ubuntu22_x86_64": "https://www.bearware.dk/teamtalksdk/v5.22a/tt5sdk_v5.22a_ubuntu22_x86_64.7z",
+    "raspbian_armhf": "https://www.bearware.dk/teamtalksdk/v5.22a/tt5sdk_v5.22a_raspbian_armhf.7z",
+}
 
 
 def get_url_suffix_from_platform() -> str:
@@ -41,43 +45,14 @@ def get_url_suffix_from_platform() -> str:
 
 
 def download() -> None:
-    headers = {
-        'User-Agent': (
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-            'AppleWebKit/537.36 (KHTML, like Gecko) '
-            'Chrome/58.0.3029.110 Safari/537.3'
-        )
-    }
+    suffix = get_url_suffix_from_platform()
+    download_url = SDK_URLS.get(suffix)
 
-    r = requests.get(url, headers=headers)
-    page = bs4.BeautifulSoup(r.text, features="html.parser")
+    if not download_url:
+        sys.exit(f"No SDK URL available for platform: {suffix}")
 
-    # Get all <li> tags from the page
-    versions = page.find_all("li")
-
-    # Try to find 5.15 versions first
-    v515 = [i for i in versions if "5.15" in i.text and i.a and i.a.get("href").endswith("/")]
-
-    if v515:
-        version = v515[-1].a.get("href").strip("/")
-        print("Using stable 5.15 version:", version)
-    else:
-        # fallback: get the latest version listed
-        valid_versions = [i for i in versions if i.a and i.a.get("href").endswith("/")]
-        if not valid_versions:
-            sys.exit("No SDK versions found on the page.")
-        version = valid_versions[-1].a.get("href").strip("/")
-        print("5.15 not found, falling back to latest available version:", version)
-
-    download_url = (
-        url
-        + "/"
-        + version
-        + "/"
-        + "tt5sdk_{v}_{p}.7z".format(v=version, p=get_url_suffix_from_platform())
-    )
-
-    print("Downloading from " + download_url)
+    print(f"Downloading TeamTalk SDK v5.22a ({suffix})...")
+    print(f"From: {download_url}")
     downloader.download_file(download_url, os.path.join(os.getcwd(), "ttsdk.7z"))
 
 
